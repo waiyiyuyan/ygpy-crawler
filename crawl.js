@@ -83,9 +83,22 @@ categories: vpn
 ${mdBody}
 `;
 
-  const mdPath = "daily.md";
+  // 🛠️ 强行锁死在当前进程运行的根目录
+  const mdPath = path.join(process.cwd(), "daily.md");
+  
+  console.log("--------------------------------------------------");
+  console.log("【调试日志】当前进程工作目录 (process.cwd()):", process.cwd());
+  console.log("【调试日志】准备写入文件的绝对路径:", mdPath);
+  console.log("--------------------------------------------------");
+
   fs.writeFileSync(mdPath, mdContent, "utf-8");
-  console.log(`爬虫完成，文章已生成：${mdPath}`);
+
+  // 验证文件是否真的成功落盘
+  if (fs.existsSync(mdPath)) {
+    console.log(`【调试日志】验证成功！daily.md 确实存在于：${mdPath}`);
+  } else {
+    console.error("【调试日志】致命错误：文件写入后未找到！");
+  }
 }
 
 crawl().catch(err => {
