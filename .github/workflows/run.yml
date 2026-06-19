@@ -35,4 +35,4 @@ jobs:
         user_email: 'github-actions[bot]@users.noreply.github.com'
         user_name: 'github-actions[bot]'
         commit_message: 'chore: 自动更新每日机场资讯'
-        target_branch: 'main'
+        destination_branch: 'main'
