@@ -83,7 +83,7 @@ categories: vpn
 ${mdBody}
 `;
 
-  const mdPath = path.join(__dirname, "daily.md");
+  const mdPath = "daily.md";
   fs.writeFileSync(mdPath, mdContent, "utf-8");
   console.log(`爬虫完成，文章已生成：${mdPath}`);
 }
