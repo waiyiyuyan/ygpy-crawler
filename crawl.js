@@ -75,7 +75,7 @@ async function crawl() {
   });
 
   const mdContent = `---
-title: ${year}年${month}月自动抓取资讯
+title: 每日机场节点与VPN测试推荐（${year}年${month}月）
 date: ${mdTime}
 tags: [爬虫,自动更新]
 categories: vpn
