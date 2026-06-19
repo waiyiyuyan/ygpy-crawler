@@ -1,0 +1,42 @@
+name: Daily Auto Crawl
+
+on:
+  schedule:
+    - cron: '30 0 * * *' # 每天北京时间 8:30 自动运行
+  workflow_dispatch: # 支持手动点击运行
+
+jobs:
+  crawl-and-push:
+    runs-on: ubuntu-latest
+    steps:
+    # 1. 下载爬虫代码
+    - name: Checkout Crawler
+      uses: actions/checkout@v4
+
+    # 2. 设置环境并安装依赖
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '24'
+        cache: 'npm'
+
+    - name: Install Dependencies
+      run: npm silent ci || npm install
+
+    # 3. 运行你的爬虫，在当前目录生成最新的 daily.md
+    - name: Run Crawler
+      run: node crawl.js
+
+    # 4. 【核心大招】精准把这一个文件推送到你的博客仓库，不影响其他任何东西
+    - name: Push Single File to Blog Repo
+      uses: dmnemec/copy_file_to_another_repo_action@main
+      env:
+        API_TOKEN_GITHUB: ${{ secrets.BLOG_DEPLOY_TOKEN }}
+      with:
+        source_file: 'daily.md'
+        destination_repo: 'waiyiyuyan/waiyiyuyan.github.io'
+        destination_folder: 'source/_posts'
+        user_email: 'github-actions[bot]@users.noreply.github.com'
+        user_name: 'github-actions[bot]'
+        commit_message: 'chore: 自动更新每日机场资讯'
+        target_branch: 'main'
