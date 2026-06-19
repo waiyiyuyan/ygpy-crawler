@@ -13,19 +13,15 @@ jobs:
     - name: Checkout Crawler
       uses: actions/checkout@v4
 
-    # 2. 设置环境并安装依赖
+    # 2. 设置环境（去掉刚才卡住你的 cache 检查）
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
         node-version: '24'
-        cache: 'npm'
 
+    # 3. 安装依赖（把 npm ci 改成最普通的 npm install）
     - name: Install Dependencies
-      run: npm silent ci || npm install
-
-    # 3. 运行你的爬虫，在当前目录生成最新的 daily.md
-    - name: Run Crawler
-      run: node crawl.js
+      run: npm install
 
     # 4. 【核心大招】精准把这一个文件推送到你的博客仓库，不影响其他任何东西
     - name: Push Single File to Blog Repo
