@@ -5,11 +5,15 @@ on:
     - cron: '30 0 * * *' # 每天北京时间 8:30 自动运行
   workflow_dispatch: # 支持手动点击运行
 
+# 🔑 核心新增：必须赋予 Actions 机器人写入当前仓库的权限，否则无法推送 data.json
+permissions:
+  contents: write
+
 jobs:
   crawl-and-push:
     runs-on: ubuntu-latest
     steps:
-    # 1. 下载爬虫代码
+    # 1. 下载爬虫代码（直接检出当前仓库）
     - name: Checkout Crawler
       uses: actions/checkout@v4
 
@@ -17,38 +21,30 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '24'
+        node-version: '20' # 建议使用稳定的长期支持版（LTS），如 20
 
     # 3. 安装爬虫所需的第三方依赖
+    # 💡 提示：如果你的仓库里有 package.json，用 npm install 没问题。
+    # 💡 如果运行报错说找不到包，可以把下面这句改为：run: npm install axios cheerio dayjs
     - name: Install Dependencies
       run: npm install
 
-    # 4. 运行你的爬虫脚本，在当前目录下生成最新的 index.html
+    # 4. 运行你的爬虫脚本，在当前目录下生成最新的 data.json
     - name: Run Crawler
       run: node crawl.js
 
-    # 5. 【直接覆盖】克隆博客仓库，把最新的 index.html 覆盖到根目录并推送
-    - name: Push index.html to Blog Repo
-      env:
-        API_TOKEN_GITHUB: ${{ secrets.BLOG_DEPLOY_TOKEN }}
+    # 5. ✨【核心修改点】不再拉去和推送外部博客，直接把生成的 data.json 提交到当前仓库
+    - name: Commit and Push data.json to Current Repo
       run: |
-        # 1. 临时拉取你的博客源码仓库
-        git clone https://${{ secrets.BLOG_DEPLOY_TOKEN }}@github.com/waiyiyuyan/waiyiyuyan.github.io.git blog-repo
-        
-        # 2. 强行把刚刚热乎生成的 index.html 搬运到博客仓库的根目录下（直接覆盖旧首页）
-        cp index.html blog-repo/index.html
-        
-        # 3. 进入博客目录配置身份并推送
-        cd blog-repo
+        # 配置 GitHub 官方机器人身份
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
         git config --global user.name "github-actions[bot]"
         
-        git add index.html
-        
-        # 检查内容到底有没有变动，只有真正有变动才提交，防止死板报错
-        if ! git diff --cached --quiet; then
-          git commit -m "chore: 自动更新首页内容与SEO"
-          git push origin main
+        # 检查 data.json 是否真的有内容更新
+        if [ -n "$(git status --porcelain data.json)" ]; then
+          git add data.json
+          git commit -m "chore: 自动同步今日最新节点纯数据 [skip ci]"
+          git push
         else
-          echo "抓取到的内容跟上次一模一样，今天就跳过推送啦！"
+          echo "抓取到的节点纯数据跟上次一模一样，今天就跳过推送啦！"
         fi
