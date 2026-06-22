@@ -33,16 +33,18 @@ jobs:
     - name: Run Crawler
       run: node crawl.js
 
-    # 5. ✨【核心修改点】不再拉去和推送外部博客，直接把生成的 data.json 提交到当前仓库
+    # 5. ✨【强推保险版】先添加再检查，100% 捉住新创建的 data.json
     - name: Commit and Push data.json to Current Repo
       run: |
         # 配置 GitHub 官方机器人身份
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
         git config --global user.name "github-actions[bot]"
         
-        # 检查 data.json 是否真的有内容更新
-        if [ -n "$(git status --porcelain data.json)" ]; then
-          git add data.json
+        # 💡 核心修改 1：别管三七二十一，先强制把 data.json 加进 Git 暂存区
+        git add data.json
+        
+        # 💡 核心修改 2：使用更稳妥的 diff --cached 命令来检查暂存区是否有新文件
+        if ! git diff --cached --quiet; then
           git commit -m "chore: 自动同步今日最新节点纯数据 [skip ci]"
           git push
         else
