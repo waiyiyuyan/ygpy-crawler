@@ -5,6 +5,22 @@ const path = require("path");
 const dayjs = require("dayjs");
 
 async function crawl() {
+  const HF_API_URL = "https://zhaojing986-my-cobalt-downloader.hf.space/";
+  console.log("🔄 [保活] 正在向 Hugging Face 发送唤醒信号...");
+  try {
+    const response = await axios.get(HF_API_URL, { 
+      timeout: 15000,
+      // 🎯 核心修改：告诉 axios，只要服务器理我们了（哪怕是 404、405），都算成功，不准报错！
+      validateStatus: function (status) {
+        return (status >= 200 && status < 300) || status === 404 || status === 405;
+      }
+    });
+    console.log(`✅ [保活] 续命成功！Hugging Face 正常响应，状态码: ${response.status}`);
+  } catch (error) {
+    // 只有在真正连不上服务器、网络断开或者 10 秒超时无响应时，才会进到这里
+    console.log(`⚠️ [保活] 唤醒请求未获正常回应（可能是超时或冷启动中）: ${error.message}`);
+  }
+
   // 获取当前年月，自动拼接链接
   const nowDate = dayjs();
   const year = nowDate.format("YYYY");
